@@ -1,1 +1,1 @@
-export { FileManager } from "./manager";
+export { FileManager } from "./manager.js";
