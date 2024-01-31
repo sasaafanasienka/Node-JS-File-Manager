@@ -7,7 +7,7 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node index.js",
-    "fast-start": "npm run start -- --username=sasaafanasienka"
+    "fast-start": "node index.js -- --username=sasaafanasienka"
   },
   "keywords": [
     "node",

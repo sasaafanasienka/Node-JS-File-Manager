@@ -1,9 +1,12 @@
 import { validateStartParams } from "../helpers/validation/validateStartParams.js";
+import { homedir } from 'os';
 
 export class FileManager {
   constructor() {
     this.process = undefined;
     this.username = undefined;
+    this.homedir = homedir()
+    this.currentDir = homedir();
   }
 
   init = () => {
@@ -13,6 +16,7 @@ export class FileManager {
     if (isParamsValid) {
       this.username = username
       this.message(`Welcome to the File Manager, ${this.username}!`)
+      this.showCurrentDir()
     } else {
       this.throwError('Incorrect username flag')
       // this.exit()
@@ -22,12 +26,28 @@ export class FileManager {
     // const value = process.stdin
   }
 
+  //#region MAIN HANDLERS
+
   addInputHandler = () => {
     this.process.stdin.on('data', this.inputHandler)
   }
   
-  inputHandler = (data) => {
-    console.log(data.toString())
+  inputHandler = (command) => {
+    const commandParts = command.toString().trim().split(' ');
+    const commandName = commandParts[0];
+    switch (commandName) {
+      case 'up':
+        this.upHandler(commandParts)
+        break
+      case 'ls':
+        // this.listDir()
+        // break
+      case 'exit':
+        // this.exit()
+        // break
+      default:
+        this.throwError('Incorrect command')
+    }
   }
 
   addSigIntHandler = () => {
@@ -39,10 +59,27 @@ export class FileManager {
     this.exit()
   }
 
-  throwError = (message = 'Something went wrong') => {
+  //#endregion
+
+  upHandler = () => {
+    const currentDirArray = this.currentDir.split('\\')
+    this.currentDir = currentDirArray.length > 1 ? currentDirArray.slice(0, -1).join('\\') : this.currentDir
+    this.showCurrentDir();
+  }
+
+  showCurrentDir = () => {
+    this.message(`You are currently in ${this.currentDir}`)
+  }
+
+  throwError = (message = 'Something went wrong', exit = false) => {
     console.error('ERROR')
     console.error(message)
-    this.exit()
+    if (!exit) {
+      this.showCurrentDir()
+    }
+    if (exit) {
+      this.exit()
+    }
   }
 
   message = (text = 'Empty message') => {
