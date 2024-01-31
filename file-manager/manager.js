@@ -1,6 +1,8 @@
+import { readdir } from "fs/promises";
 import { validateStartParams } from "../helpers/validation/validateStartParams.js";
 import { homedir } from 'os';
 import path from "path";
+import { TableMaker } from "../table-maker/table-maker.js";
 
 export class FileManager {
   constructor() {
@@ -8,6 +10,7 @@ export class FileManager {
     this.username = undefined;
     this.homedir = homedir()
     this.currentDir = homedir().split(path.sep);
+    this.tableMaker = new TableMaker()
   }
 
   init = () => {
@@ -39,16 +42,16 @@ export class FileManager {
     const commandName = commandParts[0];
     switch (commandName) {
       case 'up':
-        this.upHandler(commandParts)
+        this.upHandler()
+        break
+      case 'cd':
+        this.cdHandler(commandParts)
         break
       case 'ls':
-        // this.listDir()
-        // break
-      case 'exit':
-        // this.exit()
-        // break
+        this.lsHandler()
+        break
       default:
-        this.throwError('Incorrect command')
+        this.throwError()
     }
   }
 
@@ -68,11 +71,28 @@ export class FileManager {
     this.showCurrentDir();
   }
 
+  cdHandler = (commandParts) => {
+    const targetDir = commandParts[1];
+    if (targetDir) {
+      // this.tableMaker.showTable
+      console.log(targetDir)
+      
+    } else {
+      this.throwError()
+    }
+  }
+
+  lsHandler = async () => {
+    const list = await readdir(path.join(...this.currentDir))
+    this.tableMaker.showTable(list)
+    // console.log(list)
+  }
+
   showCurrentDir = () => {
     this.message(`You are currently in ${this.currentDir.join(path.sep)}`)
   }
 
-  throwError = (message = 'Something went wrong', exit = false) => {
+  throwError = (message = 'Operation failed', exit = false) => {
     console.error('ERROR')
     console.error(message)
     if (!exit) {
