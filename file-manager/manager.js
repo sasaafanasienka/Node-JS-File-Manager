@@ -1,16 +1,18 @@
 import { validateStartParams } from "../helpers/validation/validateStartParams.js";
 import { homedir } from 'os';
+import path from "path";
 
 export class FileManager {
   constructor() {
     this.process = undefined;
     this.username = undefined;
     this.homedir = homedir()
-    this.currentDir = homedir();
+    this.currentDir = homedir().split(path.sep);
   }
 
   init = () => {
     this.process = process
+
     const [flag, username] = process.argv[2]?.split('=') ?? []
     const isParamsValid = validateStartParams({flag, username})
     if (isParamsValid) {
@@ -62,13 +64,12 @@ export class FileManager {
   //#endregion
 
   upHandler = () => {
-    const currentDirArray = this.currentDir.split('\\')
-    this.currentDir = currentDirArray.length > 1 ? currentDirArray.slice(0, -1).join('\\') : this.currentDir
+    this.currentDir = this.currentDir.length > 1 ? this.currentDir.slice(0, -1) : this.currentDir
     this.showCurrentDir();
   }
 
   showCurrentDir = () => {
-    this.message(`You are currently in ${this.currentDir}`)
+    this.message(`You are currently in ${this.currentDir.join(path.sep)}`)
   }
 
   throwError = (message = 'Something went wrong', exit = false) => {
