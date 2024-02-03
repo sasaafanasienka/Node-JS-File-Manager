@@ -1,8 +1,8 @@
 export class TableMaker {
 
   constructor() {
-    this.maxLength = 32
-    this.columns = [8, 32, 12]
+    this.maxLength = 30
+    this.columns = [8, this.maxLength + 2, 6]
   }
 
   showTable = (list) => {
@@ -20,11 +20,20 @@ export class TableMaker {
   }
 
   showDivider = () => {
-    console.log(this.columns.map((width) => '-'.repeat(width - 2)).join(''))
+    const rowLength = this.columns.reduce((acc, curr) => acc + curr) + this.columns.length + 1
+    console.log(Array(rowLength).fill('-').join(''));
   }
 
-  showRow = ({element, index}) => {
-    console.log(`|${this.getColumn(this.columns[0], index )}|${this.getColumn(this.columns[1], element )}|`)
+  showRow = ({ element, index }) => {
+    if (element.length > this.maxLength) {
+      Array(Math.ceil(element.length / this.maxLength)).fill('').map((_, index) => {
+        return element.slice(index * this.maxLength, this.maxLength * (index + 1))
+      }).forEach((elementPart, partIndex) => {
+        this.showRow({ element: elementPart, index: partIndex > 0 ? '' : index })
+      })
+    } else {
+      console.log(`|${this.getColumn(this.columns[0], index )}|${this.getColumn(this.columns[1], element )}|${this.getColumn(this.columns[2], '' )}|`)
+    }
   }
 
   getColumn = (width, content, spacingSymbol = ' ') => {

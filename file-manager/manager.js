@@ -23,8 +23,7 @@ export class FileManager {
       this.message(`Welcome to the File Manager, ${this.username}!`)
       this.showCurrentDir()
     } else {
-      this.throwError('Incorrect username flag')
-      // this.exit()
+      this.throwError('Incorrect username flag', true)
     }
     this.addSigIntHandler()
     this.addInputHandler()
@@ -71,14 +70,20 @@ export class FileManager {
     this.showCurrentDir();
   }
 
-  cdHandler = (commandParts) => {
-    const targetDir = commandParts[1];
-    if (targetDir) {
-      // this.tableMaker.showTable
-      console.log(targetDir)
-      
-    } else {
-      this.throwError()
+  cdHandler = async (commandParts) => {
+    const isRelativePath = commandParts[1]?.startsWith('.')
+    const targetPath = isRelativePath ? path.join(...this.currentDir, commandParts[1]) : commandParts[1];
+
+    try {
+      const dir = await readdir(targetPath)
+      if (dir) {
+        this.currentDir = targetPath.split(path.sep)
+        this.showCurrentDir()
+      } else {
+        this.throwError('Incorrect path')
+      }
+    } catch (error) {
+      this.throwError('Incorrect path')
     }
   }
 
