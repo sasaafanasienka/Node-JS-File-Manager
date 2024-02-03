@@ -1,4 +1,4 @@
-import { readFile, readdir } from "fs/promises";
+import { readFile, readdir, writeFile } from "fs/promises";
 import { validateStartParams } from "../helpers/validation/validateStartParams.js";
 import { homedir } from 'os';
 import path from "path";
@@ -54,6 +54,9 @@ export class FileManager {
         break
       case 'cat':
         this.catHandler(commandParts)
+        break
+      case 'add':
+        this.addHandler(commandParts)
         break
       default:
         this.throwError()
@@ -114,6 +117,19 @@ export class FileManager {
       this.throwError('Something went wrong')
     })
   };
+
+  addHandler = async (commandParts) => {
+    this.pathMaker.checkIfPathFree(path.join(...this.currentDir, commandParts[1])).then(async targetPath => {
+      if (targetPath) {
+        try {
+          await writeFile(targetPath, commandParts[2] ?? '', {encoding: 'utf-8'})
+          this.message(`${commandParts[2] ? 'File' : 'Empty file'} ${commandParts[1]} was created`)
+        } catch (error) {
+          this.throwError('Something went wrong')
+        }
+      }
+    })
+  }
 
   showCurrentDir = () => {
     this.message(`You are currently in ${this.currentDir.join(path.sep)}`)
