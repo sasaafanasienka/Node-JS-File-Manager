@@ -1,8 +1,9 @@
-import { readdir } from "fs/promises";
+import { readFile, readdir } from "fs/promises";
 import { validateStartParams } from "../helpers/validation/validateStartParams.js";
 import { homedir } from 'os';
 import path from "path";
 import { TableMaker } from "../table-maker/table-maker.js";
+import { PathMaker } from "../path-maker/path-maker.js";
 
 export class FileManager {
   constructor() {
@@ -11,6 +12,7 @@ export class FileManager {
     this.homedir = homedir()
     this.currentDir = homedir().split(path.sep);
     this.tableMaker = new TableMaker()
+    this.pathMaker = new PathMaker({manager: this})
   }
 
   init = () => {
@@ -49,6 +51,9 @@ export class FileManager {
       case 'ls':
         this.lsHandler()
         break
+      case 'cat':
+        this.catHandler(commandParts)
+        break
       default:
         this.throwError()
     }
@@ -71,8 +76,7 @@ export class FileManager {
   }
 
   cdHandler = async (commandParts) => {
-    const isRelativePath = commandParts[1]?.startsWith('.')
-    const targetPath = isRelativePath ? path.join(...this.currentDir, commandParts[1]) : commandParts[1];
+    const targetPath = this.pathMaker(commandParts[1])
 
     try {
       const dir = await readdir(targetPath)
@@ -91,6 +95,12 @@ export class FileManager {
     const list = await readdir(path.join(...this.currentDir))
     this.tableMaker.showTable(list)
     // console.log(list)
+  }
+
+  catHandler = async (commanParts) => {
+    const targetPath = this.pathMaker.normalize(commanParts[1])
+    const fileContent = await readFile(targetPath, 'utf-8')
+    console.log(fileContent)
   }
 
   showCurrentDir = () => {
