@@ -4,6 +4,7 @@ import { homedir } from 'os';
 import path from "path";
 import { TableMaker } from "../table-maker/table-maker.js";
 import { PathMaker } from "../path-maker/path-maker.js";
+import { createReadStream } from "fs";
 
 export class FileManager {
   constructor() {
@@ -76,32 +77,43 @@ export class FileManager {
   }
 
   cdHandler = async (commandParts) => {
-    const targetPath = this.pathMaker(commandParts[1])
-
-    try {
-      const dir = await readdir(targetPath)
-      if (dir) {
-        this.currentDir = targetPath.split(path.sep)
-        this.showCurrentDir()
-      } else {
+    this.pathMaker(commandParts[1]).then(async targetPath => {
+      try {
+        const dir = await readdir(targetPath)
+        if (dir) {
+          this.currentDir = targetPath.split(path.sep)
+          this.showCurrentDir()
+        } else {
+          this.throwError('Incorrect path')
+        }
+      } catch (error) {
         this.throwError('Incorrect path')
       }
-    } catch (error) {
-      this.throwError('Incorrect path')
-    }
+    })
   }
 
   lsHandler = async () => {
     const list = await readdir(path.join(...this.currentDir))
-    this.tableMaker.showTable(list)
+    this.tableMaker.showTable(list);
+    this.showCurrentDir();
     // console.log(list)
   }
 
   catHandler = async (commanParts) => {
-    const targetPath = this.pathMaker.normalize(commanParts[1])
-    const fileContent = await readFile(targetPath, 'utf-8')
-    console.log(fileContent)
-  }
+    this.pathMaker.normalizePath(commanParts[1]).then(targetPath => {
+      if (targetPath) {
+        const readStream = createReadStream(targetPath)
+        readStream.on('data', (chunk) => {
+          console.log(chunk.toString('utf-8'))
+        })
+        readStream.on('end', () => {
+          this.showCurrentDir();
+        })
+      }
+    }).catch(_ => {
+      this.throwError('Something went wrong')
+    })
+  };
 
   showCurrentDir = () => {
     this.message(`You are currently in ${this.currentDir.join(path.sep)}`)
