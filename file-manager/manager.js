@@ -58,6 +58,9 @@ export class FileManager {
       case 'add':
         this.addHandler(commandParts)
         break
+      case 'rn':
+        this.rnHandler(commandParts)
+        break
       default:
         this.throwError()
     }
@@ -129,6 +132,10 @@ export class FileManager {
         }
       }
     })
+  }
+
+  rnHandler = async (commandParts) => {
+    
   }
 
   showCurrentDir = () => {
