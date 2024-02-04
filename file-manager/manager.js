@@ -32,7 +32,7 @@ export class FileManager {
     // }
     this.addSigIntHandler()
     this.addInputHandler()
-    this.cpHandler(['cp','./tt.txt', './helpers'])
+    this.mvHandler(['mv','./tt.txt', './helpers'])
     setTimeout(() => {
       process.exit(0)
     }, 2000)
@@ -170,7 +170,7 @@ export class FileManager {
     })
   }
 
-  cpHandler = async (commandParts) => {
+  cpHandler = async (commandParts, move = false) => {
     const originPath = commandParts[1] ?? ''
     const targetFolderPath = commandParts[2] ?? ''
 
@@ -200,8 +200,12 @@ export class FileManager {
           throw new Error('Target file already exists')
         }
         try {
+          console.log('MOVE',move)
           await copyFile(originPath, targetPath)
-          this.message(`File ${originPath} was copied to ${targetPath}`)
+          if (move) {
+            this.rmHanlder(commandParts, false)
+          }
+          this.message(`File ${originPath} was ${move ? 'moved' : 'copied'} to ${targetPath}`)
         } catch (error) {
           this.throwError('Something went wrong')
         }
@@ -211,16 +215,20 @@ export class FileManager {
     })
   }
 
-  rmHanlder = async (commandParts) => {
+  rmHanlder = async (commandParts, withMessage = true) => {
     this.pathMaker.checkPathType(commandParts[1]).then(async ({targetPath, type}) => {
       if (type) {
         try {
           if (type === 'dir') {
             await rmdir(targetPath)
-            this.message(`Directory ${commandParts[1]} was deleted`)
+            if (withMessage) {
+              this.message(`Directory ${commandParts[1]} was deleted`)
+            }
           } else if (type === 'file') {
             await rm(targetPath)
-            this.message(`File ${commandParts[1]} was deleted`)
+            if (withMessage) {
+              this.message(`File ${commandParts[1]} was deleted`)
+            }
           } else {
             throw new Error('Something went wrong')
           }
@@ -232,7 +240,7 @@ export class FileManager {
   }
 
   mvHandler = async (commandParts) => {
-    
+    this.cpHandler(commandParts, true);
   }
 
   showCurrentDir = () => {
