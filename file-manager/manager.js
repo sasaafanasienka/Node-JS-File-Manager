@@ -1,17 +1,20 @@
-import { readFile, readdir, writeFile, rename } from "fs/promises";
+import { readFile, readdir, writeFile, rename, rm, rmdir } from "fs/promises";
 import { validateStartParams } from "../helpers/validation/validateStartParams.js";
 import { homedir } from 'os';
 import path from "path";
 import { TableMaker } from "../table-maker/table-maker.js";
 import { PathMaker } from "../path-maker/path-maker.js";
 import { createReadStream } from "fs";
+import { recursiveCopy } from "../helpers/copy/recursiveFileCopy.js";
 
 export class FileManager {
   constructor() {
     this.process = undefined;
     this.username = undefined;
-    this.homedir = homedir()
-    this.currentDir = homedir().split(path.sep);
+    this.homedir = 'c:\\DC\\node-js-file-manager';
+    // this.homedir = homedir()
+    this.currentDir = 'c:\\DC\\node-js-file-manager'.split(path.sep);
+    // this.currentDir = homedir().split(path.sep);
     this.tableMaker = new TableMaker()
     this.pathMaker = new PathMaker({manager: this})
   }
@@ -61,6 +64,15 @@ export class FileManager {
       case 'rn':
         this.rnHandler(commandParts)
         break
+      case 'cp':
+        this.cpHandler(commandParts)
+        break
+      case 'mv': 
+        this.mvHandler(commandParts)
+        break
+      case 'rm':
+        this.rmHanlder(commandParts)
+        break
       default:
         this.throwError()
     }
@@ -83,7 +95,7 @@ export class FileManager {
   }
 
   cdHandler = async (commandParts) => {
-    this.pathMaker(commandParts[1]).then(async targetPath => {
+    this.pathMaker.checkIfPathExists(commandParts[1]).then(async targetPath => {
       try {
         const dir = await readdir(targetPath)
         if (dir) {
@@ -134,11 +146,13 @@ export class FileManager {
     })
   }
 
+  //Надо переписать
+
   rnHandler = async (commandParts) => {
-    const filePath = path.join(...this.currentDir, commandParts[1])
-    const newName = path.join(...this.currentDir, commandParts[2])
+    const originPath = path.join(commandParts[1])
+    const newName = path.join(commandParts[2])
     Promise.all([
-      this.pathMaker.checkIfPathExists(filePath),
+      this.pathMaker.checkIfPathExists(originPath),
       this.pathMaker.checkIfPathFree(newName)
     ]).then(async ([targetPath, newNamePath]) => {
       console.log(targetPath)
@@ -147,12 +161,57 @@ export class FileManager {
       if (targetPath && newNamePath) {
         try {
           await rename(targetPath, newNamePath)
-          this.message(`File ${filePath} was renamed to ${newName}`)
+          this.message(`File ${originPath} was renamed to ${newName}`)
         } catch (error) {
           this.throwError('Something went wrong')
         }
       }
     })
+  }
+
+  cpHandler = async (commandParts) => {
+    const originPath = commandParts[1]
+    const copyPath = commandParts[2]
+
+    Promise.all([
+      this.pathMaker.checkIfPathExists(originPath),
+      this.pathMaker.checkIfPathIsDirectory(copyPath)
+    ]).then(async ([originPath, copyPath]) => {
+      console.log(originPath, copyPath)
+
+      if (originPath && copyPath) {
+        try {
+          await recursiveCopy({originPath, copyPath})
+          this.message(`File ${originPath} was copied to ${copyPath}`)
+        } catch (error) {
+          this.throwError('Something went wrong')
+        }
+      }
+    })
+  }
+
+  rmHanlder = async (commandParts) => {
+    this.pathMaker.checkPathType(commandParts[1]).then(async ({targetPath, type}) => {
+      if (type) {
+        try {
+          if (type === 'dir') {
+            await rmdir(targetPath)
+            this.message(`Directory ${commandParts[1]} was deleted`)
+          } else if (type === 'file') {
+            await rm(targetPath)
+            this.message(`File ${commandParts[1]} was deleted`)
+          } else {
+            throw new Error('Something went wrong')
+          }
+        } catch (error) {
+          this.throwError(error ?? 'Something went wrong')
+        }
+      }
+    })
+  }
+
+  mvHandler = async (commandParts) => {
+    
   }
 
   showCurrentDir = () => {
