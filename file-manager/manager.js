@@ -1,11 +1,10 @@
-import { readFile, readdir, writeFile, rename, rm, rmdir } from "fs/promises";
+import { readFile, readdir, writeFile, rename, rm, rmdir, copyFile } from "fs/promises";
 import { validateStartParams } from "../helpers/validation/validateStartParams.js";
 import { homedir } from 'os';
 import path from "path";
 import { TableMaker } from "../table-maker/table-maker.js";
 import { PathMaker } from "../path-maker/path-maker.js";
 import { createReadStream } from "fs";
-import { recursiveCopy } from "../helpers/copy/recursiveFileCopy.js";
 
 export class FileManager {
   constructor() {
@@ -22,17 +21,22 @@ export class FileManager {
   init = () => {
     this.process = process
 
-    const [flag, username] = process.argv[2]?.split('=') ?? []
-    const isParamsValid = validateStartParams({flag, username})
-    if (isParamsValid) {
-      this.username = username
-      this.message(`Welcome to the File Manager, ${this.username}!`)
-      this.showCurrentDir()
-    } else {
-      this.throwError('Incorrect username flag', true)
-    }
+    // const [flag, username] = process.argv[2]?.split('=') ?? []
+    // const isParamsValid = validateStartParams({flag, username})
+    // if (isParamsValid) {
+    //   this.username = username
+    //   this.message(`Welcome to the File Manager, ${this.username}!`)
+    //   this.showCurrentDir()
+    // } else {
+    //   this.throwError('Incorrect username flag', true)
+    // }
     this.addSigIntHandler()
     this.addInputHandler()
+    this.cpHandler(['cp','./tt.txt', './helpers'])
+    setTimeout(() => {
+      process.exit(0)
+    }, 2000)
+    // process.exit(0)
     // const value = process.stdin
   }
 
@@ -155,9 +159,6 @@ export class FileManager {
       this.pathMaker.checkIfPathExists(originPath),
       this.pathMaker.checkIfPathFree(newName)
     ]).then(async ([targetPath, newNamePath]) => {
-      console.log(targetPath)
-      console.log(newNamePath)
-
       if (targetPath && newNamePath) {
         try {
           await rename(targetPath, newNamePath)
@@ -170,23 +171,43 @@ export class FileManager {
   }
 
   cpHandler = async (commandParts) => {
-    const originPath = commandParts[1]
-    const copyPath = commandParts[2]
+    const originPath = commandParts[1] ?? ''
+    const targetFolderPath = commandParts[2] ?? ''
 
     Promise.all([
-      this.pathMaker.checkIfPathExists(originPath),
-      this.pathMaker.checkIfPathIsDirectory(copyPath)
-    ]).then(async ([originPath, copyPath]) => {
-      console.log(originPath, copyPath)
-
-      if (originPath && copyPath) {
+      this.pathMaker.checkPathType(originPath),
+      this.pathMaker.checkPathType(targetFolderPath),
+    ]).then(([{ type: originType }, { type: targetType }]) => {
+      console.log(originType)
+      if (originType === 'dir') {
+        throw new Error('Origin path is not a file')
+      }
+      if (targetType === 'file') {
+        throw new Error('Target path is not a directory')
+      }
+    }).then(() => {
+      const originFileName = path.basename(originPath)
+      const targetFilePath = path.join(targetFolderPath, originFileName)
+      return Promise.all([
+        this.pathMaker.checkIfPathExists(originPath),
+        this.pathMaker.checkIfPathFree(targetFilePath),
+      ]).then(async ([originPath, targetPath]) => {
+  
+        if (!originPath) {
+          throw new Error('Origin file does not exist')
+        }
+        if (!targetPath) {
+          throw new Error('Target file already exists')
+        }
         try {
-          await recursiveCopy({originPath, copyPath})
-          this.message(`File ${originPath} was copied to ${copyPath}`)
+          await copyFile(originPath, targetPath)
+          this.message(`File ${originPath} was copied to ${targetPath}`)
         } catch (error) {
           this.throwError('Something went wrong')
         }
-      }
+      })
+    }).catch(error => {
+      this.throwError(error.message)
     })
   }
 
