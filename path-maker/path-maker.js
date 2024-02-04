@@ -11,7 +11,7 @@ export class PathMaker {
     return path.isAbsolute(pathString) ? pathString : path.join(...this.manager.currentDir, pathString);
   }
 
-  normalizePath = async (pathString) => {
+  checkIfPathExists = async (pathString) => {
     const targetPath = this._getAbsolutePath(pathString);
     try {
       await access(targetPath, constants.R_OK | constants.W_OK);

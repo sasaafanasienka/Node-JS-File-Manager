@@ -1,4 +1,4 @@
-import { readFile, readdir, writeFile } from "fs/promises";
+import { readFile, readdir, writeFile, rename } from "fs/promises";
 import { validateStartParams } from "../helpers/validation/validateStartParams.js";
 import { homedir } from 'os';
 import path from "path";
@@ -106,7 +106,7 @@ export class FileManager {
   }
 
   catHandler = async (commanParts) => {
-    this.pathMaker.normalizePath(commanParts[1]).then(targetPath => {
+    this.pathMaker.checkIfPathExists(commanParts[1]).then(targetPath => {
       if (targetPath) {
         const readStream = createReadStream(targetPath)
         readStream.on('data', (chunk) => {
@@ -135,7 +135,24 @@ export class FileManager {
   }
 
   rnHandler = async (commandParts) => {
-    
+    const filePath = path.join(...this.currentDir, commandParts[1])
+    const newName = path.join(...this.currentDir, commandParts[2])
+    Promise.all([
+      this.pathMaker.checkIfPathExists(filePath),
+      this.pathMaker.checkIfPathFree(newName)
+    ]).then(async ([targetPath, newNamePath]) => {
+      console.log(targetPath)
+      console.log(newNamePath)
+
+      if (targetPath && newNamePath) {
+        try {
+          await rename(targetPath, newNamePath)
+          this.message(`File ${filePath} was renamed to ${newName}`)
+        } catch (error) {
+          this.throwError('Something went wrong')
+        }
+      }
+    })
   }
 
   showCurrentDir = () => {
