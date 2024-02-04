@@ -1,42 +1,84 @@
 import { createReadStream, createWriteStream } from 'node:fs';
 import { createGzip, createGunzip } from 'node:zlib';
 import { pipeline } from 'node:stream'
-import path from 'node:path';
 
 export class CompressManager {
   constructor({manager}) {
     this.manager = manager
   }
 
-  compress = () => {
-    const txtPath = path.join('src/zip/files/fileToCompress.txt');
-    const zipPath = path.join('src/zip/files/archive.gz');
-
-    const gzip = createGzip();
-    const source = createReadStream(txtPath);
-    const destination = createWriteStream(zipPath);
-
-    pipeline(source, gzip, destination, (err) => {
-      if (err) {
-        console.error('An error occurred:', err);
-        process.exitCode = 1;
-      }
-    });
+  commandHandler = (commandParts) => {
+    const commandName = commandParts[0]
+    switch (commandName) {
+      case 'compress':
+        this.compress(commandParts)
+        break
+      case 'decompress':
+        this.decompress(commandParts)
+        break
+      default:
+        this.manager.throwError('Unknown compress command')
+        break
+    }
   }
 
-  decompress = () => {
-    const txtPath = path.join('src/zip/files/fileToCompress.txt');
-    const zipPath = path.join('src/zip/files/archive.gz');
-
-    const readStream = createReadStream(zipPath)
-    const gunzip = createGunzip()
-    const writeStream = createWriteStream(txtPath)
-
-    pipeline(readStream, gunzip, writeStream, (err) => {
+  compress = (commandParts) => {
+    const originPath = commandParts[1] ?? ''
+    const targetPath = commandParts[2] ?? ''
+    
+    Promise.all([
+      this.manager.pathMaker.checkIfPathExists(originPath),
+      this.manager.pathMaker.checkIfPathFree(targetPath),
+    ]).then(([originPath, targetPath]) => {
+      if (!originPath) {
+        this.manager.throwError(`Origin path does not exists`)
+        return
+      }
+      if (!targetPath) {
+        this.manager.throwError(`Target Path is already taken`)
+        return
+      }
+      const gzip = createGzip();
+      const source = createReadStream(originPath);
+      const destination = createWriteStream(targetPath);
+      pipeline(source, gzip, destination, (err) => {
         if (err) {
-            console.error('Произошла ошибка:', err);
-            process.exitCode = 1;
+          this.manager.throwError(`Error while compress: ${err}`)
         }
-    });
+      });
+      pipeline.on('end', () => {
+        this.manager.message(`Successfully compressed`)
+      })
+    })
+  }
+  
+  decompress = (commandParts) => {
+    const originPath = commandParts[1] ?? ''
+    const targetPath = commandParts[2] ?? ''
+    Promise.all([
+      this.manager.pathMaker.checkIfPathExists(originPath),
+      this.manager.pathMaker.checkIfPathFree(targetPath),
+    ]).then(([originPath, targetPath]) => {
+      if (!originPath) {
+        this.manager.throwError(`Origin path does not exists`)
+        return
+      }
+      if (!targetPath) {
+        this.manager.throwError(`Target Path is already taken`)
+        return
+      }
+      const readStream = createReadStream(originPath)
+      const gunzip = createGunzip()
+      const writeStream = createWriteStream(targetPath)
+      
+      pipeline(readStream, gunzip, writeStream, (err) => {
+        if (err) {
+          this.manager.throwError(`Error while decompress: ${err}`)
+        }
+      });
+      pipeline.on('end', () => {
+        this.manager.message(`Successfully decompressed`)
+      })
+    })
   }
 }

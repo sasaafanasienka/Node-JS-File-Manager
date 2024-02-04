@@ -42,17 +42,7 @@ export class Cli {
 
     this.addSigIntHandler()
     this.addInputHandler()
-
-    this.inputHandler('hash ./index.js')
-    // this.inputHandler('hash ./index.js')
-    setTimeout(() => {
-      process.exit(0)
-    }, 3000)
-    // process.exit(0)
-    // const value = process.stdin
   }
-
-  //#region MAIN HANDLERS
 
   addInputHandler = () => {
     this.process.stdin.on('data', this.inputHandler)
