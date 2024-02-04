@@ -1,4 +1,4 @@
-import { FileManager } from "./file-manager/index.js";
+import { Cli } from "./cli.js";
 
-const fileManager = new FileManager()
-fileManager.init();
+const cli = new Cli()
+cli.init()

@@ -17,7 +17,7 @@ export class PathMaker {
       await access(targetPath, constants.R_OK | constants.W_OK);
       return targetPath
     } catch {
-      this.manager.throwError(`Path ${targetPath} does not exist`);
+      // this.manager.throwError(`Path ${targetPath} does not exist`);
       return undefined
     } 
   }
@@ -25,8 +25,8 @@ export class PathMaker {
   checkIfPathFree = async (pathString) => {
     const targetPath = this._getAbsolutePath(pathString);
     try {
-      await access(targetPath, constants.R_OK | constants.W_OK);
-      this.manager.throwError(`Path ${targetPath} is already taken`);
+      await access(targetPath, constants.F_OK);
+      // this.manager.throwError(`Path ${targetPath} is already taken`);
       return undefined
     } catch {
       return targetPath
@@ -42,7 +42,7 @@ export class PathMaker {
       }
       return targetPath
     } catch {
-      this.manager.throwError(`Path ${targetPath} does not exist`);
+      // this.manager.throwError(`Path ${targetPath} does not exist`);
       return undefined
     }
   }
@@ -53,7 +53,7 @@ export class PathMaker {
       const stats = await stat(targetPath);
       return {targetPath, type: stats.isFile() ? 'file' : stats.isDirectory() ? 'dir' : undefined}
     } catch {
-      this.manager.throwError(`Path ${targetPath} does not exist`);
+      // this.manager.throwError(`Path ${targetPath} does not exist`);
       return {
         targetPath: undefined,
         type: undefined

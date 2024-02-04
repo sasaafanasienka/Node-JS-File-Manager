@@ -1,42 +1,45 @@
 export class TableMaker {
 
-  constructor({
-    maxNameLength,
-    columnsTemplate
-  } = {}) {
-    this.maxLength = maxNameLength ?? 30
-    this.columns = columnsTemplate ?? [8, this.maxLength + 2, 6]
-  }
-
   showTable = (list) => {
-    this.showHeader();
-    list.forEach((element, index) => {
-      this.showRow({element, index})
+    const columnsAmount = list.reduce((acc, curr) => {
+      return curr.length > acc ? curr.length : acc
+    }, 0)
+    
+    const columnsTemplate = Array(columnsAmount).fill(undefined).map((_, index) => {
+      return list.map(el => el[index]).reduce((acc, curr) => {
+        return curr.length > acc ? curr.length : acc
+      }, 0)
+    }).map(el => el + 2)
+
+    this.showDivider(columnsTemplate)
+    
+    this.showRow({
+      columnsTemplate,
+      content: list[0]
     })
-    this.showDivider()
+
+    this.showDivider(columnsTemplate)
+
+    list.slice(1).forEach((element) => {
+      this.showRow({
+        columnsTemplate,
+        content: element,
+      })
+    })
+
+    this.showDivider(columnsTemplate)
   }
 
-  showHeader = () => {
-    this.showDivider()
-    this.showRow({element: 'Name', index: 'Index', type: 'Type'})
-    this.showDivider()
-  }
-
-  showDivider = () => {
-    const rowLength = this.columns.reduce((acc, curr) => acc + curr) + this.columns.length + 1
+  showDivider = (columnsTemplate) => {
+    const rowLength = columnsTemplate.reduce((acc, curr) => acc + curr) + columnsTemplate.length + 1
     console.log(Array(rowLength).fill('-').join(''));
   }
 
-  showRow = ({ element = "", index = "", type="" }) => {
-    if (element.length > this.maxLength) {
-      Array(Math.ceil(element.length / this.maxLength)).fill('').map((_, index) => {
-        return element.slice(index * this.maxLength, this.maxLength * (index + 1))
-      }).forEach((elementPart, partIndex) => {
-        this.showRow({ element: elementPart, index: partIndex > 0 ? '' : index })
-      })
-    } else {
-      console.log(`|${this.getColumn(this.columns[0], index )}|${this.getColumn(this.columns[1], element )}|${this.getColumn(this.columns[2], type )}|`)
-    }
+  showRow = ({ columnsTemplate, content }) => {
+    const row = columnsTemplate.map((width, index) => {
+      return this.getColumn(width, content[index])
+    })
+    console.log(`|${row.join('|')}|`)
   }
 
   getColumn = (width, content, spacingSymbol = ' ') => {
