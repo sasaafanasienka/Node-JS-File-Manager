@@ -1,8 +1,11 @@
 export class TableMaker {
 
-  constructor() {
-    this.maxLength = 30
-    this.columns = [8, this.maxLength + 2, 6]
+  constructor({
+    maxNameLength,
+    columnsTemplate
+  } = {}) {
+    this.maxLength = maxNameLength ?? 30
+    this.columns = columnsTemplate ?? [8, this.maxLength + 2, 6]
   }
 
   showTable = (list) => {
@@ -15,7 +18,7 @@ export class TableMaker {
 
   showHeader = () => {
     this.showDivider()
-    this.showRow({element: 'Name', index: 'Index'})
+    this.showRow({element: 'Name', index: 'Index', type: 'Type'})
     this.showDivider()
   }
 
@@ -24,7 +27,7 @@ export class TableMaker {
     console.log(Array(rowLength).fill('-').join(''));
   }
 
-  showRow = ({ element, index }) => {
+  showRow = ({ element = "", index = "", type="" }) => {
     if (element.length > this.maxLength) {
       Array(Math.ceil(element.length / this.maxLength)).fill('').map((_, index) => {
         return element.slice(index * this.maxLength, this.maxLength * (index + 1))
@@ -32,7 +35,7 @@ export class TableMaker {
         this.showRow({ element: elementPart, index: partIndex > 0 ? '' : index })
       })
     } else {
-      console.log(`|${this.getColumn(this.columns[0], index )}|${this.getColumn(this.columns[1], element )}|${this.getColumn(this.columns[2], '' )}|`)
+      console.log(`|${this.getColumn(this.columns[0], index )}|${this.getColumn(this.columns[1], element )}|${this.getColumn(this.columns[2], type )}|`)
     }
   }
 

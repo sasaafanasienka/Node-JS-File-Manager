@@ -5,6 +5,7 @@ import path from "path";
 import { TableMaker } from "../table-maker/table-maker.js";
 import { PathMaker } from "../path-maker/path-maker.js";
 import { createReadStream } from "fs";
+import { OsManager } from "../os-manager/os-manager.js";
 
 export class FileManager {
   constructor() {
@@ -15,7 +16,8 @@ export class FileManager {
     this.currentDir = 'c:\\DC\\node-js-file-manager'.split(path.sep);
     // this.currentDir = homedir().split(path.sep);
     this.tableMaker = new TableMaker()
-    this.pathMaker = new PathMaker({manager: this})
+    this.pathMaker = new PathMaker({ manager: this })
+    this.osManager = new OsManager({ manager: this })
   }
 
   init = () => {
@@ -32,7 +34,7 @@ export class FileManager {
     // }
     this.addSigIntHandler()
     this.addInputHandler()
-    this.mvHandler(['mv','./tt.txt', './helpers'])
+    this.inputHandler('os --architecture')
     setTimeout(() => {
       process.exit(0)
     }, 2000)
@@ -77,6 +79,8 @@ export class FileManager {
       case 'rm':
         this.rmHanlder(commandParts)
         break
+      case 'os':
+        this.osManager.commandHandler(commandParts);
       default:
         this.throwError()
     }
