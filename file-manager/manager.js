@@ -6,6 +6,7 @@ import { TableMaker } from "../table-maker/table-maker.js";
 import { PathMaker } from "../path-maker/path-maker.js";
 import { createReadStream } from "fs";
 import { OsManager } from "../os-manager/os-manager.js";
+import { HashManager } from "../hash-manager/hash-manager.js";
 
 export class FileManager {
   constructor() {
@@ -18,6 +19,7 @@ export class FileManager {
     this.tableMaker = new TableMaker()
     this.pathMaker = new PathMaker({ manager: this })
     this.osManager = new OsManager({ manager: this })
+    this.hashManager = new HashManager({ manager: this })
   }
 
   init = () => {
@@ -34,7 +36,7 @@ export class FileManager {
     // }
     this.addSigIntHandler()
     this.addInputHandler()
-    this.inputHandler('os --architecture')
+    this.inputHandler('hash ./index.js')
     setTimeout(() => {
       process.exit(0)
     }, 2000)
@@ -81,6 +83,10 @@ export class FileManager {
         break
       case 'os':
         this.osManager.commandHandler(commandParts);
+        break
+      case 'hash':
+        this.hashHandler(commandParts)
+        break
       default:
         this.throwError()
     }
@@ -113,6 +119,16 @@ export class FileManager {
           this.throwError('Incorrect path')
         }
       } catch (error) {
+        this.throwError('Incorrect path')
+      }
+    })
+  }
+
+  hashHandler = async (commandParts) => {
+    this.pathMaker.checkPathType(commandParts[1]).then(async ({targetPath, type}) => {
+      if (type === 'file') {
+        await this.hashManager.calculate(targetPath)
+      } else {
         this.throwError('Incorrect path')
       }
     })
