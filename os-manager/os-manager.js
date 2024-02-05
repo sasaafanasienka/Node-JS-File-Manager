@@ -38,7 +38,7 @@ export class OsManager {
 
   cpusHandler = () => {
     const cpus = os.cpus();
-    this.manager.message(`Total CPUs amount ${cpus.length}`)
+    this.manager.message(`Total CPUs amount ${cpus.length}`, false)
     const header = ['Index', 'Model', 'Speed']
     const cpusList = cpus.map((cpu, index) => {
       return [
@@ -46,6 +46,7 @@ export class OsManager {
       ]
     })
     this.tableMaker.showTable([header, ...cpusList])
+    this.manager.message(undefined)
   }
 
   homedirHandler = () => {

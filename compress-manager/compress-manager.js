@@ -41,14 +41,14 @@ export class CompressManager {
       const gzip = createGzip();
       const source = createReadStream(originPath);
       const destination = createWriteStream(targetPath);
+      destination.on('finish', () => {
+        this.manager.message(`Successfully compressed`)
+      })
       pipeline(source, gzip, destination, (err) => {
         if (err) {
           this.manager.throwError(`Error while compress: ${err}`)
         }
       });
-      pipeline.on('end', () => {
-        this.manager.message(`Successfully compressed`)
-      })
     })
   }
   
@@ -70,15 +70,15 @@ export class CompressManager {
       const readStream = createReadStream(originPath)
       const gunzip = createGunzip()
       const writeStream = createWriteStream(targetPath)
+      writeStream.on('finish', () => {
+        this.manager.message(`Successfully decompressed`)
+      })
       
       pipeline(readStream, gunzip, writeStream, (err) => {
         if (err) {
           this.manager.throwError(`Error while decompress: ${err}`)
         }
       });
-      pipeline.on('end', () => {
-        this.manager.message(`Successfully decompressed`)
-      })
     })
   }
 }

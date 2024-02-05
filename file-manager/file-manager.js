@@ -47,10 +47,10 @@ export class FileManager {
       if (targetPath) {
         const readStream = createReadStream(targetPath)
         readStream.on('data', (chunk) => {
-          console.log(chunk.toString('utf-8'))
+          this.manager.message(chunk.toString('utf-8'), false)
         })
         readStream.on('end', () => {
-          this.manager.showCurrentDir();
+          this.manager.message(undefined);
         })
       }
     }).catch(_ => {
@@ -67,6 +67,8 @@ export class FileManager {
         } catch (error) {
           this.manager.throwError('Something went wrong')
         }
+      } else {
+        this.manager.throwError('Something went wrong')
       }
     })
   }
@@ -78,10 +80,14 @@ export class FileManager {
     Promise.all([
       this.manager.pathMaker.checkIfPathExists(originPath),
       this.manager.pathMaker.checkIfPathFree(newName)
-    ]).then(async ([targetPath, newNamePath]) => {
-      if (targetPath && newNamePath) {
+    ]).then(async ([originPath, newNamePath]) => {
+      if (!originPath) {
+        this.manager.throwError('Origin path does not exists')
+      } else if (!newNamePath) {
+        this.manager.throwError('Target path has been already taken')
+      } else {
         try {
-          await rename(targetPath, newNamePath)
+          await rename(originPath, newNamePath)
           this.manager.message(`File ${originPath} was renamed to ${newName}`)
         } catch (error) {
           this.manager.throwError('Something went wrong')
@@ -98,7 +104,6 @@ export class FileManager {
       this.manager.pathMaker.checkPathType(originPath),
       this.manager.pathMaker.checkPathType(targetFolderPath),
     ]).then(([{ type: originType }, { type: targetType }]) => {
-      console.log(originType)
       if (originType === 'dir') {
         throw new Error('Origin path is not a file')
       }
@@ -130,9 +135,6 @@ export class FileManager {
         }
       })
     }).catch(error => {
-      console.log(
-        'CATCG'
-      )
       this.manager.throwError(error.message)
     })
   }
@@ -157,6 +159,8 @@ export class FileManager {
         } catch (error) {
           this.manager.throwError(error ?? 'Something went wrong')
         }
+      } else {
+        this.manager.throwError('Something went wrong')
       }
     })
   }

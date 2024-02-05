@@ -26,7 +26,7 @@ export class HashManager {
           this.manager.message(hashString)
         })
       } else {
-        this.manager.throwError(`Path ${filePath} does not exist`)
+        this.manager.throwError(`Path does not exist`)
       }
     })
   }

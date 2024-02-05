@@ -32,7 +32,6 @@ export class Cli {
     if (isParamsValid) {
       this.username = username
       this.message(`Welcome to the File Manager, ${this.username}!`)
-      this.showCurrentDir()
     } else {
       this.throwError('Incorrect username flag', true)
     }
@@ -93,7 +92,7 @@ export class Cli {
 
   upHandler = () => {
     this.currentDir = this.currentDir.length > 1 ? this.currentDir.slice(0, -1) : this.currentDir
-    this.showCurrentDir();
+    this.message(undefined);
   }
 
   cdHandler = async (commandParts) => {
@@ -102,7 +101,7 @@ export class Cli {
         const dir = await readdir(targetPath)
         if (dir) {
           this.currentDir = targetPath.split(path.sep)
-          this.showCurrentDir()
+          this.message(undefined)
         } else {
           this.throwError('Incorrect path')
         }
@@ -122,26 +121,27 @@ export class Cli {
 
     const tableData = await listData;
     this.tableMaker.showTable([header, ...tableData]);
-    this.showCurrentDir();
-  }
-
-  showCurrentDir = () => {
-    this.message(`You are currently in ${this.currentDir.join(path.sep)}`)
+    this.message(undefined);
   }
 
   throwError = (message = 'Operation failed', exit = false) => {
     console.error('ERROR')
     console.error(message)
     if (!exit) {
-      this.showCurrentDir()
+      this.message(undefined)
     }
     if (exit) {
       this.exit()
     }
   }
 
-  message = (text = 'Empty message') => {
-    console.log(text)
+  message = (text, withCurrentDir = true) => {
+    if (text) {
+      console.log(text)
+    }
+    if (withCurrentDir) {
+      console.log(`You are currently in ${this.currentDir.join(path.sep)}`)
+    }
   }
 
   exit = (code = 1) => {
